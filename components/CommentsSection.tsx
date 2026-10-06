@@ -31,7 +31,7 @@ export default function CommentsSection() {
           content,
           rating,
           created_at,
-          profiles (
+          profiles!comments_user_id_fkey (
             username,
             avatar_url,
             badge
@@ -65,13 +65,32 @@ export default function CommentsSection() {
     setSubmitting(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) {
         alert("Yorum yapabilmek için giriş yapmalısınız.");
         return;
       }
 
+      // Kullanıcının profili var mı kontrol et, yoksa otomatik oluştur
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile) {
+        await supabase.from("profiles").insert({
+          id: user.id,
+          username: user.email?.split("@")[0] || "Kullanıcı",
+          avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}`,
+          badge: "Üye",
+        });
+      }
+
+      // Yorum ekle
       const { error } = await supabase.from("comments").insert({
         user_id: user.id,
         content: newComment,
@@ -97,7 +116,10 @@ export default function CommentsSection() {
       </h2>
 
       {/* Yorum Formu */}
-      <form onSubmit={handleAddComment} className="mb-10 bg-zinc-900/60 border border-violet-500/30 p-6 rounded-2xl backdrop-blur-xl">
+      <form
+        onSubmit={handleAddComment}
+        className="mb-10 bg-zinc-900/60 border border-violet-500/30 p-6 rounded-2xl backdrop-blur-xl"
+      >
         <textarea
           rows={3}
           value={newComment}
@@ -136,12 +158,18 @@ export default function CommentsSection() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {comments.map((item) => (
-            <div key={item.id} className="bg-zinc-900/40 border border-violet-500/20 p-5 rounded-2xl backdrop-blur-md flex flex-col justify-between">
+            <div
+              key={item.id}
+              className="bg-zinc-900/40 border border-violet-500/20 p-5 rounded-2xl backdrop-blur-md flex flex-col justify-between"
+            >
               <p className="text-zinc-200 text-sm italic mb-4">"{item.content}"</p>
               <div className="flex items-center justify-between border-t border-white/10 pt-3">
                 <div className="flex items-center gap-3">
                   <img
-                    src={item.profiles?.avatar_url || "https://api.dicebear.com/7.x/bottts/svg?seed=user"}
+                    src={
+                      item.profiles?.avatar_url ||
+                      "https://api.dicebear.com/7.x/bottts/svg?seed=user"
+                    }
                     alt="avatar"
                     className="w-8 h-8 rounded-full border border-violet-400/40"
                   />
@@ -154,7 +182,9 @@ export default function CommentsSection() {
                     </span>
                   </div>
                 </div>
-                <span className="text-amber-400 text-xs">{"★".repeat(item.rating)}</span>
+                <span className="text-amber-400 text-xs">
+                  {"★".repeat(item.rating)}
+                </span>
               </div>
             </div>
           ))}
