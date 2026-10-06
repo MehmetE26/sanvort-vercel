@@ -11,7 +11,7 @@ type Star = {
   duration: number;
 };
 
-export default function Home() {
+export default function LandingPage() {
   const [stars, setStars] = useState<Star[]>([]);
   const [mounted, setMounted] = useState(false);
 

@@ -6,6 +6,7 @@ import Sidebar from "../../components/Sidebar";
 import CreatePost from "../../components/CreatePost";
 import PostCard, { Post } from "../../components/PostCard";
 import Footer from "../../components/Footer";
+import CommentsSection from "../../components/CommentsSection";
 
 // Varsayılan ilk veriler
 const INITIAL_POSTS: Post[] = [
@@ -19,7 +20,7 @@ const INITIAL_POSTS: Post[] = [
   },
 ];
 
-export default function Home() {
+export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [postText, setPostText] = useState("");
   const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
@@ -74,7 +75,7 @@ export default function Home() {
       <Sidebar menuOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
       {/* AKIŞ ALANI */}
-      <div className="relative z-10 w-full max-w-3xl px-6 pt-[450px] pb-48 flex flex-col gap-14">
+      <div className="relative z-10 w-full max-w-3xl px-6 pt-[120px] pb-24 flex flex-col gap-14">
         
         {/* Arama Kutusu */}
         <div className="w-full">
@@ -108,6 +109,11 @@ export default function Home() {
               />
             </div>
           ))}
+        </div>
+
+        {/* Veritabanı Yorum Alanı */}
+        <div className="w-full mt-8 border-t border-violet-500/20 pt-10">
+          <CommentsSection />
         </div>
 
       </div>

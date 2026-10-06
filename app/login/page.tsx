@@ -29,7 +29,7 @@ export default function Login() {
       top: Math.random() * 100,
       size: Math.random() * 2 + 1,
       delay: Math.random() * 5,
-      duration: Math.random() * 4 + 3,
+      duration: Math.random() * 4 + 3, // 3 ile 7 saniye arası yumuşak nefes alma
     }));
     setStars(generated);
   }, []);
@@ -61,7 +61,6 @@ export default function Login() {
     }
   }
 
-  // Enter tuşuna basıldığında formu gönderme kontrolü
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleLogin(e);
@@ -70,18 +69,39 @@ export default function Login() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-black text-white px-6 py-16 selection:bg-purple-600 selection:text-white">
-      {/* Arka Plan Yapısı */}
-      <div className="space"></div>
-      <div className="nebula"></div>
-      <div className="glow-center"></div>
+      {/* CSS Nefes Alma (Breathing) Animasyonu Tanımı */}
+      <style jsx>{`
+        @keyframes breathing {
+          0%, 100% {
+            opacity: 0.1;
+            transform: scale(0.6);
+            box-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.4);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+          }
+        }
+        .star-breath {
+          animation-name: breathing;
+          animation-iteration-count: infinite;
+          animation-timing-function: ease-in-out;
+        }
+      `}</style>
 
-      {/* Yıldızlar */}
-      <div className="stars">
+      {/* Arka Plan Efektleri */}
+      <div className="space absolute inset-0 pointer-events-none" />
+      <div className="nebula absolute inset-0 pointer-events-none" />
+      <div className="glow-center absolute inset-0 pointer-events-none" />
+
+      {/* Breathing Yıldızlar Katmanı */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         {mounted &&
           stars.map((star, index) => (
             <span
               key={index}
-              className="star"
+              className="star-breath absolute bg-white rounded-full"
               style={{
                 left: `${star.left}%`,
                 top: `${star.top}%`,
@@ -94,7 +114,7 @@ export default function Login() {
           ))}
       </div>
 
-      {/* Serbest Alan / Form İçeriği */}
+      {/* Form İçeriği */}
       <div className="relative z-20 w-full max-w-xl flex flex-col items-center">
         
         {/* Başlık ve Slogan */}
@@ -112,7 +132,6 @@ export default function Login() {
 
         {/* Giriş Formu */}
         <form onSubmit={handleLogin} className="w-full">
-          
           <div style={{ marginBottom: "28px" }}>
             <input
               type="email"
