@@ -43,7 +43,6 @@ export default function ProfileSettings() {
     }
   };
 
-  // Profil Resmi Yükleme (Supabase Storage)
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -56,20 +55,17 @@ export default function ProfileSettings() {
       const fileExt = file.name.split(".").pop();
       const filePath = `${userId}-${Math.random()}.${fileExt}`;
 
-      // 1. Supabase Storage 'avatars' bucket'ına resmi yükle
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // 2. Yüklenen resmin public URL'ini al
       const { data } = supabase.storage
         .from("avatars")
         .getPublicUrl(filePath);
 
-      const publicUrl = data.publicUrl;
-      setAvatarUrl(publicUrl);
+      setAvatarUrl(data.publicUrl);
       setMessage("Fotoğraf yüklendi! Lütfen 'Kaydet'e bas.");
     } catch (err: any) {
       setMessage("Fotoğraf yükleme hatası: " + err.message);
@@ -78,7 +74,6 @@ export default function ProfileSettings() {
     }
   };
 
-  // Kullanıcı Adı ve Profil Resmini Güncelleme
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) return;
@@ -95,7 +90,6 @@ export default function ProfileSettings() {
 
       if (error) throw error;
       setMessage("Profilin başarıyla güncellendi!");
-      // Değişikliklerin yorum alanına yansıması için sayfayı yenile
       window.location.reload();
     } catch (err: any) {
       setMessage("Güncelleme hatası: " + err.message);
@@ -104,12 +98,11 @@ export default function ProfileSettings() {
     }
   };
 
-  if (!userId) return null; // Giriş yapmamışsa gösterme
+  if (!userId) return null;
 
   return (
-  
-    <div className="w-full max-w-3xl mx-auto glass rounded-3xl p-8 border-2 border-violet-500/30 shadow-[0_15px_50px_rgba(0,0,0,0.6)] text-white">
-      <h3 className="text-2xl font-bold text-violet-400 mb-6 text-center">
+    <div className="w-full glass rounded-3xl p-6 border-2 border-violet-500/30 text-white">
+      <h3 className="text-xl font-bold text-violet-400 mb-6 text-center">
         Profil Ayarları
       </h3>
 
@@ -120,7 +113,6 @@ export default function ProfileSettings() {
       )}
 
       <form onSubmit={handleUpdateProfile} className="space-y-6">
-        {/* Profil Resmi Önizleme ve Yükleme */}
         <div className="flex flex-col items-center gap-4">
           <img
             src={avatarUrl || "https://api.dicebear.com/7.x/bottts/svg?seed=user"}
@@ -139,7 +131,6 @@ export default function ProfileSettings() {
           </label>
         </div>
 
-        {/* Kullanıcı Adı */}
         <div>
           <label className="text-sm text-zinc-400 block mb-2 font-medium">Kullanıcı Adı</label>
           <input
@@ -152,7 +143,6 @@ export default function ProfileSettings() {
           />
         </div>
 
-        {/* Kaydet Butonu */}
         <button
           type="submit"
           disabled={loading || uploading}
