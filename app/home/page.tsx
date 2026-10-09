@@ -1,190 +1,126 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import Header from "../../components/Header";
+import Sidebar from "../../components/Sidebar";
+import CreatePost from "../../components/CreatePost";
+import PostCard, { Post } from "../../components/PostCard";
+import Footer from "../../components/Footer";
+import CommentsSection from "../../components/CommentsSection";
+import ProfileSettings from "../../components/ProfileSettings";
 
-interface Profile {
-  username: string;
-  avatar_url: string;
-}
+// Varsayılan ilk veriler
+const INITIAL_POSTS: Post[] = [
+  {
+    id: 1,
+    author: "Mehmet",
+    text: "🎉 SanVort'un ilk sürümü sonunda hazır!",
+    likes: 12,
+    liked: false,
+    comments: [],
+  },
+];
 
-interface CommentItem {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  profiles: Profile | null;
-}
+export default function HomePage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [postText, setPostText] = useState("");
+  const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-export default function CommentsSection() {
-  const [comments, setComments] = useState<CommentItem[]>([]);
-  const [newComment, setNewComment] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-
+  // Sayfa ilk yüklendiğinde tarayıcı hafızasından (localStorage) verileri çek
   useEffect(() => {
-    // 1. Mevcut oturum açmış kullanıcıyı al
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    };
-
-    checkUser();
-    fetchComments();
+    const savedPosts = localStorage.getItem("sanvort_posts");
+    if (savedPosts) {
+      try {
+        setPosts(JSON.parse(savedPosts));
+      } catch (error) {
+        console.error("Yükleme hatası:", error);
+      }
+    }
+    setIsLoaded(true);
   }, []);
 
-  // 2. Yorumları ve her yorumun yazar profilini veritabanından çek
-  const fetchComments = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("comments")
-        .select(`
-          id,
-          content,
-          created_at,
-          user_id,
-          profiles!comments_user_id_fkey (
-            username,
-            avatar_url
-          )
-        `)
-        .order("created_at", { ascending: true });
-
-      if (error) {
-        console.error("Yorum çekme hatası:", error.message);
-      } else {
-        // Supabase bazen dizi döndürebildiği için uygun formata getiriyoruz
-        const formattedData = (data || []).map((item: any) => ({
-          ...item,
-          profiles: Array.isArray(item.profiles) ? item.profiles[0] : item.profiles,
-        }));
-        setComments(formattedData);
-      }
-    } catch (err) {
-      console.error("Beklenmeyen hata:", err);
+  // Postlar veya yorumlar her değiştiğinde tarayıcı hafızasına kaydet
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("sanvort_posts", JSON.stringify(posts));
     }
-  };
+  }, [posts, isLoaded]);
 
-  // 3. Yeni yorum gönderme mantığı
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
+  const handleShare = () => {
+    if (!postText.trim()) return;
 
-    if (!user) {
-      alert("Yorum yapabilmek için giriş yapmalısın!");
-      return;
-    }
+    const newPost: Post = {
+      id: Date.now(),
+      author: "Mehmet",
+      text: postText,
+      likes: 0,
+      liked: false,
+      comments: [],
+    };
 
-    setLoading(true);
-
-    try {
-      // Önce kullanıcının profil tablosunda var olduğundan emin olalım
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile) {
-        await supabase.from("profiles").insert({
-          id: user.id,
-          username: user.email?.split("@")[0] || "Kullanıcı",
-          avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}`,
-        });
-      }
-
-      // Yorum kaydını ekle
-      const { error } = await supabase.from("comments").insert({
-        content: newComment,
-        user_id: user.id,
-      });
-
-      if (error) {
-        console.error("Yorum gönderme hatası:", error.message);
-        alert("Yorum gönderilemedi: " + error.message);
-      } else {
-        setNewComment("");
-        // Yorumları tekrar yükle
-        fetchComments();
-      }
-    } catch (err: any) {
-      console.error("İşlem hatası:", err);
-    } finally {
-      setLoading(false);
-    }
+    setPosts([newPost, ...posts]);
+    setPostText("");
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto bg-zinc-900/80 border border-violet-500/20 p-6 rounded-2xl text-white backdrop-blur-xl">
-      <h3 className="text-xl font-bold text-violet-400 mb-6 text-center">
-        Topluluk Yorumları
-      </h3>
+    <main className="relative min-h-screen w-full text-white flex flex-col items-center bg-transparent selection:bg-purple-600 selection:text-white">
+      {/* Uzay Katmanları */}
+      <div className="space" />
+      <div className="nebula" />
+      <div className="glow-center" />
+      <div className="stars" />
 
-      {/* Yorum Listesi */}
-      <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto pr-2">
-        {comments.length === 0 ? (
-          <p className="text-center text-zinc-500 text-sm py-4">
-            Henüz yorum yapılmamış. İlk yorumu sen yaz!
-          </p>
-        ) : (
-          comments.map((comment) => {
-            const avatar =
-              comment.profiles?.avatar_url ||
-              `https://api.dicebear.com/7.x/bottts/svg?seed=${comment.user_id}`;
-            const username = comment.profiles?.username || "Anonim Kullanıcı";
+      {/* Header & Sidebar */}
+      <Header onMenuOpen={() => setMenuOpen(true)} />
+      <Sidebar menuOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
-            return (
-              <div
-                key={comment.id}
-                className="flex items-start gap-3 bg-zinc-800/40 p-3.5 rounded-xl border border-white/5"
-              >
-                <img
-                  src={avatar}
-                  alt={username}
-                  className="w-10 h-10 rounded-full object-cover border border-violet-500/50 flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs font-semibold text-violet-300 truncate">
-                      {username}
-                    </span>
-                    <span className="text-[10px] text-zinc-500">
-                      {new Date(comment.created_at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-zinc-200 break-words">
-                    {comment.content}
-                  </p>
-                </div>
-              </div>
-            );
-          })
-        )}
+      {/* AKIŞ ALANI */}
+      <div className="relative z-10 w-full max-w-3xl px-6 pt-[120px] pb-24 flex flex-col gap-14">
+        
+        {/* Arama Kutusu */}
+        <div className="w-full">
+          <input
+            type="text"
+            placeholder="SanVort evreninde ara..."
+            className="w-full rounded-2xl border-2 border-violet-500/30 bg-zinc-900/60 backdrop-blur-xl px-8 py-7 text-2xl font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/30 text-white placeholder-zinc-400 transition-all shadow-[0_0_25px_rgba(139,92,246,0.15)]"
+          />
+        </div>
+
+        {/* Gönderi Yazma Kutusu */}
+        <div className="glass rounded-3xl px-10 py-12 border-2 border-violet-500/30 shadow-[0_15px_50px_rgba(0,0,0,0.6)] min-h-[360px] flex flex-col justify-between">
+          <CreatePost
+            postText={postText}
+            setPostText={setPostText}
+            onShare={handleShare}
+          />
+        </div>
+
+        {/* Akış Kartları */}
+        <div className="flex flex-col gap-12">
+          {posts.map((post) => (
+            <div 
+              key={post.id}
+              className="glass rounded-3xl px-10 py-12 border-2 border-violet-500/20 hover:border-violet-500/40 transition-all shadow-2xl min-h-[300px] flex flex-col justify-between"
+            >
+              <PostCard
+                post={post}
+                posts={posts}
+                setPosts={setPosts}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Profil Ayarları ve Topluluk Yorumları */}
+        <div className="w-full mt-8 border-t border-violet-500/20 pt-10 flex flex-col gap-10">
+          <ProfileSettings />
+          <CommentsSection />
+        </div>
+
       </div>
 
-      {/* Yorum Gönderme Formu */}
-      <form onSubmit={handleSubmitComment} className="flex gap-2">
-        <input
-          type="text"
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder={
-            user ? "Yorumunu yaz..." : "Yorum yapmak için giriş yapmalısın"
-          }
-          disabled={!user || loading}
-          className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500 disabled:opacity-50"
-        />
-        <button
-          type="submit"
-          disabled={!user || loading || !newComment.trim()}
-          className="bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
-        >
-          {loading ? "..." : "Paylaş"}
-        </button>
-      </form>
-    </div>
+      <Footer />
+    </main>
   );
 }
