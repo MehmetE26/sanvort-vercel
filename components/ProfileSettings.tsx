@@ -107,26 +107,27 @@ export default function ProfileSettings() {
   if (!userId) return null; // Giriş yapmamışsa gösterme
 
   return (
-    <div className="w-full max-w-xl mx-auto my-8 bg-zinc-900/80 border border-violet-500/30 p-6 rounded-2xl text-white backdrop-blur-xl">
-      <h3 className="text-xl font-bold text-violet-400 mb-4 text-center">
+  
+    <div className="w-full max-w-3xl mx-auto glass rounded-3xl p-8 border-2 border-violet-500/30 shadow-[0_15px_50px_rgba(0,0,0,0.6)] text-white">
+      <h3 className="text-2xl font-bold text-violet-400 mb-6 text-center">
         Profil Ayarları
       </h3>
 
       {message && (
-        <p className="text-sm text-center mb-4 text-amber-400 bg-amber-500/10 p-2 rounded-lg">
+        <p className="text-sm text-center mb-6 text-amber-400 bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
           {message}
         </p>
       )}
 
-      <form onSubmit={handleUpdateProfile} className="space-y-4">
+      <form onSubmit={handleUpdateProfile} className="space-y-6">
         {/* Profil Resmi Önizleme ve Yükleme */}
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center gap-4">
           <img
             src={avatarUrl || "https://api.dicebear.com/7.x/bottts/svg?seed=user"}
             alt="Profil Resmi"
-            className="w-20 h-20 rounded-full object-cover border-2 border-violet-500 shadow-lg"
+            className="w-24 h-24 rounded-full object-cover border-2 border-violet-500 shadow-xl"
           />
-          <label className="cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-xs px-3 py-2 rounded-lg border border-white/10 transition-all">
+          <label className="cursor-pointer bg-zinc-900/80 hover:bg-violet-600/30 text-xs px-4 py-2.5 rounded-xl border border-violet-500/30 transition-all font-medium">
             {uploading ? "Fotoğraf Yükleniyor..." : "Profil Resmi Seç"}
             <input
               type="file"
@@ -140,13 +141,13 @@ export default function ProfileSettings() {
 
         {/* Kullanıcı Adı */}
         <div>
-          <label className="text-xs text-zinc-400 block mb-1">Kullanıcı Adı</label>
+          <label className="text-sm text-zinc-400 block mb-2 font-medium">Kullanıcı Adı</label>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Kullanıcı adın"
-            className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-violet-500"
+            className="w-full bg-zinc-900/80 border border-violet-500/30 rounded-2xl p-4 text-white text-base focus:outline-none focus:border-violet-500 transition-all placeholder-zinc-400"
             required
           />
         </div>
@@ -155,7 +156,7 @@ export default function ProfileSettings() {
         <button
           type="submit"
           disabled={loading || uploading}
-          className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-2.5 rounded-xl transition-all disabled:opacity-50"
+          className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-3.5 rounded-2xl transition-all disabled:opacity-50 text-base shadow-[0_0_20px_rgba(139,92,246,0.3)]"
         >
           {loading ? "Kaydediliyor..." : "Profili Kaydet"}
         </button>
