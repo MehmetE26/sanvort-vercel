@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SANVORT | Oyun Biter. Hikâye Devam Eder.",
   description: "SANVORT topluluk ve hikaye platformu.",
+  icons: {
+    icon: "/icon.png", // app veya public klasörüne koyduğun görsel adı
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
