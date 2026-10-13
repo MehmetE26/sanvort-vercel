@@ -98,7 +98,21 @@ export default function ProfileSettings() {
     }
   };
 
-  if (!userId) return null;
+  if (loading) {
+    return (
+      <div className="w-full glass rounded-3xl p-6 border-2 border-violet-500/30 text-white text-center">
+        <p className="text-sm text-zinc-400 animate-pulse">Profil bilgileri yükleniyor...</p>
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <div className="w-full glass rounded-3xl p-6 border-2 border-violet-500/30 text-white text-center">
+        <p className="text-sm text-zinc-400">Profil ayarlarını düzenlemek için giriş yapmalısın.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full glass rounded-3xl p-6 border-2 border-violet-500/30 text-white">
