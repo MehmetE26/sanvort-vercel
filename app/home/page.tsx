@@ -7,7 +7,6 @@ import CreatePost from "../../components/CreatePost";
 import PostCard, { Post } from "../../components/PostCard";
 import Footer from "../../components/Footer";
 import CommentsSection from "../../components/CommentsSection";
-import ProfileSettings from "../../components/ProfileSettings";
 
 // Varsayılan ilk veriler
 const INITIAL_POSTS: Post[] = [
@@ -112,9 +111,8 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* Profil Ayarları ve Topluluk Yorumları */}
+        {/* Topluluk Yorumları */}
         <div className="w-full mt-8 border-t border-violet-500/20 pt-10 flex flex-col gap-10">
-          <ProfileSettings />
           <CommentsSection />
         </div>
 

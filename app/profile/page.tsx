@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import ProfileSettings from "@/components/ProfileSettings";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("posts");
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const user = {
     name: "Memari",
@@ -72,7 +74,11 @@ export default function ProfilePage() {
 
                 </div>
 
-                <button className="rounded-xl bg-violet-600 px-7 py-3 font-bold transition hover:bg-violet-500">
+                {/* Profili Düzenle Butonu */}
+                <button 
+                  onClick={() => setIsEditOpen(true)}
+                  className="rounded-xl bg-violet-600 px-7 py-3 font-bold transition hover:bg-violet-500 cursor-pointer shadow-lg hover:shadow-violet-500/25 active:scale-95"
+                >
                   Profili Düzenle
                 </button>
 
@@ -310,6 +316,24 @@ export default function ProfilePage() {
         </div>
 
       </section>
+
+      {/* PROFİLİ DÜZENLE MODAL (AÇILIR PENCERE) */}
+      {isEditOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg rounded-3xl border border-violet-500/30 bg-zinc-950 p-6 shadow-[0_0_50px_rgba(139,92,246,0.3)]">
+            {/* Kapat Butonu */}
+            <button
+              onClick={() => setIsEditOpen(false)}
+              className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 transition hover:bg-zinc-700 hover:text-white"
+            >
+              ✕
+            </button>
+
+            {/* Profil Ayarları Bileşeni */}
+            <ProfileSettings />
+          </div>
+        </div>
+      )}
 
     </main>
   );
