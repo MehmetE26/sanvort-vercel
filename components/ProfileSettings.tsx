@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export default function ProfileSettings() {
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [username, setUsername] = useState("");
@@ -12,6 +13,7 @@ export default function ProfileSettings() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    setMounted(true);
     getProfile();
   }, []);
 
@@ -48,8 +50,7 @@ export default function ProfileSettings() {
       setUploading(true);
       setMessage("");
 
-      if (!e.target.files || e.target.files.length === 0) return;
-      if (!userId) return;
+      if (!e.target.files || e.target.files.length === 0 || !userId) return;
 
       const file = e.target.files[0];
       const fileExt = file.name.split(".").pop();
@@ -66,7 +67,7 @@ export default function ProfileSettings() {
         .getPublicUrl(filePath);
 
       setAvatarUrl(data.publicUrl);
-      setMessage("Fotoğraf yüklendi! Lütfen 'Kaydet'e bas.");
+      setMessage("Fotoğraf yüklendi! Lütfen 'Profili Kaydet'e bas.");
     } catch (err: any) {
       setMessage("Fotoğraf yükleme hatası: " + err.message);
     } finally {
@@ -90,7 +91,7 @@ export default function ProfileSettings() {
 
       if (error) throw error;
       setMessage("Profilin başarıyla güncellendi!");
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 1000);
     } catch (err: any) {
       setMessage("Güncelleme hatası: " + err.message);
     } finally {
@@ -98,9 +99,11 @@ export default function ProfileSettings() {
     }
   };
 
+  if (!mounted) return null;
+
   if (loading) {
     return (
-      <div className="w-full glass rounded-3xl p-6 border-2 border-violet-500/30 text-white text-center">
+      <div className="w-full text-white text-center py-8">
         <p className="text-sm text-zinc-400 animate-pulse">Profil bilgileri yükleniyor...</p>
       </div>
     );
@@ -108,14 +111,14 @@ export default function ProfileSettings() {
 
   if (!userId) {
     return (
-      <div className="w-full glass rounded-3xl p-6 border-2 border-violet-500/30 text-white text-center">
+      <div className="w-full text-white text-center py-8">
         <p className="text-sm text-zinc-400">Profil ayarlarını düzenlemek için giriş yapmalısın.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full glass rounded-3xl p-6 border-2 border-violet-500/30 text-white">
+    <div className="w-full text-white">
       <h3 className="text-xl font-bold text-violet-400 mb-6 text-center">
         Profil Ayarları
       </h3>
@@ -151,16 +154,15 @@ export default function ProfileSettings() {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Kullanıcı adın"
-            className="w-full bg-zinc-900/80 border border-violet-500/30 rounded-2xl p-4 text-white text-base focus:outline-none focus:border-violet-500 transition-all placeholder-zinc-400"
-            required
+            placeholder="Kullanıcı adını gir..."
+            className="w-full rounded-xl bg-zinc-900 px-4 py-3 text-white border border-zinc-800 focus:border-violet-500 outline-none transition"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading || uploading}
-          className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-3.5 rounded-2xl transition-all disabled:opacity-50 text-base shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+          className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-3.5 rounded-2xl transition-all disabled:opacity-50 text-base shadow-[0_0_20px_rgba(139,92,246,0.3)] cursor-pointer"
         >
           {loading ? "Kaydediliyor..." : "Profili Kaydet"}
         </button>
