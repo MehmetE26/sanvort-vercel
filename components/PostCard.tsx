@@ -6,9 +6,11 @@ export interface Post {
   id: number;
   author: string;
   text: string;
+  media_url?: string | null;      // <-- Bunu ekle
+  media_type?: "image" | "video" | null; // <-- Bunu ekle
   likes: number;
   liked: boolean;
-  comments: string[];
+  comments: any[];
 }
 
 interface PostCardProps {

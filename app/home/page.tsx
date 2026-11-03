@@ -1,8 +1,7 @@
-import { supabase } from "@/lib/supabase";
 "use client";
 
-
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import CreatePost from "../../components/CreatePost";
@@ -10,58 +9,74 @@ import PostCard, { Post } from "../../components/PostCard";
 import Footer from "../../components/Footer";
 import CommentsSection from "../../components/CommentsSection";
 
-// Varsayılan ilk veriler
-const INITIAL_POSTS: Post[] = [
-  {
-    id: 1,
-    author: "Mehmet",
-    text: "🎉 SanVort'un ilk sürümü sonunda hazır!",
-    likes: 12,
-    liked: false,
-    comments: [],
-  },
-];
-
 export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [postText, setPostText] = useState("");
-  const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [posts, setPosts] = useState<Post[]>([]);
 
-  // Sayfa ilk yüklendiğinde tarayıcı hafızasından (localStorage) verileri çek
+  // Sayfa açıldığında Supabase'den postları çek
   useEffect(() => {
-    const savedPosts = localStorage.getItem("sanvort_posts");
-    if (savedPosts) {
-      try {
-        setPosts(JSON.parse(savedPosts));
-      } catch (error) {
-        console.error("Yükleme hatası:", error);
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from("posts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Postlar çekilemedi:", error.message);
+      } else if (data) {
+        const formattedPosts: Post[] = data.map((item: any) => ({
+          id: item.id,
+          author: "Mehmet",
+          text: item.content,
+          media_url: item.media_url,
+          media_type: item.media_type,
+          likes: 0,
+          liked: false,
+          comments: [],
+        }));
+        setPosts(formattedPosts);
       }
-    }
-    setIsLoaded(true);
-  }, []);
-
-  // Postlar veya yorumlar her değiştiğinde tarayıcı hafızasına kaydet
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem("sanvort_posts", JSON.stringify(posts));
-    }
-  }, [posts, isLoaded]);
-
-  const handleShare = () => {
-    if (!postText.trim()) return;
-
-    const newPost: Post = {
-      id: Date.now(),
-      author: "Mehmet",
-      text: postText,
-      likes: 0,
-      liked: false,
-      comments: [],
     };
 
-    setPosts([newPost, ...posts]);
-    setPostText("");
+    fetchPosts();
+  }, []);
+
+  // Post paylaşma fonksiyonu (Supabase Kayıt)
+  const handleShare = async (mediaUrl?: string, mediaType?: "image" | "video" | null) => {
+    if (!postText.trim() && !mediaUrl) return;
+
+    const { data, error } = await supabase
+      .from("posts")
+      .insert([
+        {
+          content: postText,
+          media_url: mediaUrl || null,
+          media_type: mediaType || null,
+        },
+      ])
+      .select();
+
+    if (error) {
+      console.error("Supabase kayıt hatası:", error.message);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const newPost: Post = {
+        id: data[0].id,
+        author: "Mehmet",
+        text: data[0].content,
+        media_url: data[0].media_url,
+        media_type: data[0].media_type,
+        likes: 0,
+        liked: false,
+        comments: [],
+      };
+
+      setPosts([newPost, ...posts]);
+      setPostText("");
+    }
   };
 
   return (
