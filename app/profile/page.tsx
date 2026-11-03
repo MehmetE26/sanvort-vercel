@@ -40,6 +40,11 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("posts");
   const [isEditOpen, setIsEditOpen] = useState(false);
   
+  // Hangi gönderinin yorum panelinin açık olduğunu tutan state
+  const [openComments, setOpenComments] = useState<{ [key: number]: boolean }>({});
+  // Yorum input değerleri
+  const [commentInputs, setCommentInputs] = useState<{ [key: number]: string }>({});
+
   const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
@@ -120,6 +125,14 @@ export default function ProfilePage() {
     } finally {
       setUploading(false);
     }
+  };
+
+  // Yorum panelini açıp kapatan fonksiyon
+  const toggleComments = (postId: number) => {
+    setOpenComments((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
   };
 
   return (
@@ -278,11 +291,11 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* İçerik Alanı (Büyütülmüş ve Dolgun Gönderi Kartları) */}
+        {/* İçerik Alanı */}
         <div className="mt-6 rounded-3xl border border-violet-500/30 bg-[#0d0722]/85 backdrop-blur-md p-8 sm:p-10 min-h-[500px]">
           {activeTab === "posts" && (
             <div className="grid gap-8">
-              {/* Büyütülmüş Paylaşım Kutusu */}
+              {/* Paylaşım Kutusu */}
               <div className="rounded-3xl border border-violet-500/30 bg-violet-950/30 p-6 sm:p-8">
                 <textarea
                   placeholder="SanVort uzayında neler oluyor? Düşüncelerini paylaş..."
@@ -300,32 +313,116 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Büyütülmüş & Ferahlatılmış Akış Kartları (Sadece Mevcut 2 Gönderi) */}
-              {[1, 2].map((post) => (
-                <div key={post} className="rounded-3xl border border-violet-500/20 bg-violet-950/20 p-8 sm:p-10 transition hover:border-violet-500/50 shadow-lg">
-                  <div className="mb-6 flex items-center gap-5">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-600 font-bold overflow-hidden border-2 border-violet-400/40 text-xl shadow-md">
-                      {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                      ) : (
-                        username ? username.charAt(0).toUpperCase() : "U"
-                      )}
+              {/* Akış Kartları */}
+              {[1, 2].map((postId) => {
+                const isCommentsOpen = !!openComments[postId];
+
+                return (
+                  <div key={postId} className="rounded-3xl border border-violet-500/20 bg-violet-950/20 p-8 sm:p-10 transition hover:border-violet-500/40 shadow-lg">
+                    <div className="mb-6 flex items-center gap-5">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-600 font-bold overflow-hidden border-2 border-violet-400/40 text-xl shadow-md">
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                        ) : (
+                          username ? username.charAt(0).toUpperCase() : "U"
+                        )}
+                      </div>
+                      <div>
+                        <h2 className="font-bold text-lg text-white">{username || "Kullanıcı"}</h2>
+                        <p className="text-sm text-zinc-400">2 saat önce</p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="font-bold text-lg text-white">{username || "Kullanıcı"}</h2>
-                      <p className="text-sm text-zinc-400">2 saat önce</p>
+
+                    <p className="text-base sm:text-lg leading-8 text-zinc-200">
+                      SANVORT için ilk gönderim 🚀 Yakında çok daha güzel özellikler gelecek.
+                    </p>
+
+                    {/* Etkileşim Butonları */}
+                    <div className="mt-8 flex gap-8 text-sm font-semibold text-zinc-300">
+                      <button className="transition hover:text-violet-400 cursor-pointer flex items-center gap-2 py-1">
+                        ❤️ 124
+                      </button>
+                      
+                      {/* YORUM BUTONU - Paneli Tıklamayla Açıp Kapatır */}
+                      <button 
+                        onClick={() => toggleComments(postId)}
+                        className={`transition cursor-pointer flex items-center gap-2 py-1 px-3 rounded-xl border ${
+                          isCommentsOpen 
+                            ? "bg-violet-600/30 text-violet-300 border-violet-500/50" 
+                            : "border-transparent hover:text-violet-400 hover:bg-violet-950/40"
+                        }`}
+                      >
+                        💬 18 Yorum
+                      </button>
+
+                      <button className="transition hover:text-violet-400 cursor-pointer flex items-center gap-2 py-1">
+                        🔁 Paylaş
+                      </button>
                     </div>
+
+                    {/* SÜZÜLEREK AÇILAN YORUM PANELİ */}
+                    <div 
+                      className={`grid transition-all duration-300 ease-in-out ${
+                        isCommentsOpen 
+                          ? "grid-rows-[1fr] opacity-100 mt-6 pt-6 border-t border-violet-500/20" 
+                          : "grid-rows-[0fr] opacity-0 mt-0 pt-0 border-t border-transparent"
+                      }`}
+                    >
+                      <div className="overflow-hidden">
+                        
+                        {/* Gömülü (İçinde Buton Olan) Input Kutusu */}
+                        <div className="relative flex items-center w-full mb-6">
+                          <input
+                            type="text"
+                            placeholder="Yorum yaz..."
+                            value={commentInputs[postId] || ""}
+                            onChange={(e) => setCommentInputs({ ...commentInputs, [postId]: e.target.value })}
+                            className="w-full rounded-2xl bg-[#060312] pl-5 pr-28 py-3.5 text-white text-sm border border-violet-500/30 focus:border-violet-500 outline-none transition shadow-inner"
+                          />
+                          {/* İNPUT'UN İÇİNE GÖMÜLÜ GÖNDER BUTONU */}
+                          <button 
+                            disabled={!commentInputs[postId]?.trim()}
+                            className="absolute right-2 px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-violet-950/50 disabled:text-zinc-600 disabled:cursor-not-allowed text-white text-xs font-bold transition-all cursor-pointer shadow-[0_0_10px_rgba(139,92,246,0.3)]"
+                          >
+                            Gönder
+                          </button>
+                        </div>
+
+                        {/* Örnek Yorumlar Listesi */}
+                        <div className="space-y-4">
+                          <div className="flex gap-3 bg-[#060312]/60 p-4 rounded-2xl border border-violet-500/10">
+                            <div className="w-9 h-9 rounded-full bg-violet-800/80 flex items-center justify-center font-bold text-xs shrink-0">
+                              A
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-violet-300">Alex</span>
+                                <span className="text-[10px] text-zinc-500">1 saat önce</span>
+                              </div>
+                              <p className="text-xs text-zinc-300 mt-1">Hayırlı olsun reis, tasarım uzay temasına efsane uymuş! 🚀</p>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-3 bg-[#060312]/60 p-4 rounded-2xl border border-violet-500/10">
+                            <div className="w-9 h-9 rounded-full bg-indigo-800/80 flex items-center justify-center font-bold text-xs shrink-0">
+                              K
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-indigo-300">Kullanıcı12</span>
+                                <span className="text-[10px] text-zinc-500">30 dk önce</span>
+                              </div>
+                              <p className="text-xs text-zinc-300 mt-1">Animasyonlar akıyor resmen, ellerine sağlık.</p>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
                   </div>
-                  <p className="text-base sm:text-lg leading-8 text-zinc-200">
-                    SANVORT için ilk gönderim 🚀 Yakında çok daha güzel özellikler gelecek.
-                  </p>
-                  <div className="mt-8 flex gap-8 text-sm font-semibold text-zinc-300">
-                    <button className="transition hover:text-violet-400 cursor-pointer flex items-center gap-2">❤️ 124</button>
-                    <button className="transition hover:text-violet-400 cursor-pointer flex items-center gap-2">💬 18</button>
-                    <button className="transition hover:text-violet-400 cursor-pointer flex items-center gap-2">🔁 Paylaş</button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

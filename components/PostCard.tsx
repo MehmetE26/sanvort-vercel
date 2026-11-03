@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export interface Post {
   id: number;
@@ -21,6 +21,29 @@ export default function PostCard({ post, posts, setPosts }: PostCardProps) {
   const [commentText, setCommentText] = useState("");
   const [editingCommentIndex, setEditingCommentIndex] = useState<number | null>(null);
   const [editCommentText, setEditCommentText] = useState("");
+  
+  // Yorum panelinin açık/kapalı olma durumu
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+
+  // Kartın referansı (dışarı tıklamayı algılamak için)
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Dışarı tıklandığında paneli kapatan mantık
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        setIsCommentsOpen(false);
+      }
+    };
+
+    if (isCommentsOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isCommentsOpen]);
 
   const handleLike = () => {
     setPosts(
@@ -96,7 +119,7 @@ export default function PostCard({ post, posts, setPosts }: PostCardProps) {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full h-full max-w-full overflow-hidden">
+    <div ref={cardRef} className="flex flex-col gap-6 w-full h-full max-w-full overflow-hidden">
       {/* Pürüzlü Alev Kesim SVG Maskesi */}
       <svg className="absolute w-0 h-0" aria-hidden="true" focusable="false">
         <defs>
@@ -121,11 +144,11 @@ export default function PostCard({ post, posts, setPosts }: PostCardProps) {
         {post.text}
       </p>
 
-      {/* Beğeni ve Yorum Sayısı */}
+      {/* Beğeni ve Yorum Sayısı / Butonu */}
       <div className="flex items-center gap-6 pt-2 border-t border-violet-500/10">
         <button
           onClick={handleLike}
-          className={`group flex items-center gap-3 px-5 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 ${
+          className={`group flex items-center gap-3 px-5 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${
             post.liked
               ? "bg-red-500/20 text-red-500 border border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.3)]"
               : "bg-zinc-900/50 text-red-500/80 hover:text-red-500 hover:bg-red-500/10 border border-zinc-800 shadow-md"
@@ -144,7 +167,15 @@ export default function PostCard({ post, posts, setPosts }: PostCardProps) {
           <span className="font-bold text-xl">{post.likes}</span>
         </button>
 
-        <div className="flex items-center gap-3 text-zinc-400 text-xl font-medium px-4 py-2.5">
+        {/* Yorum Butonu */}
+        <button
+          onClick={() => setIsCommentsOpen(!isCommentsOpen)}
+          className={`flex items-center gap-3 text-xl font-medium px-4 py-2.5 rounded-xl transition-all cursor-pointer ${
+            isCommentsOpen
+              ? "bg-violet-600/30 text-violet-300 border border-violet-500/50 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+              : "text-zinc-400 hover:text-violet-400 hover:bg-violet-950/40 border border-transparent"
+          }`}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -158,97 +189,110 @@ export default function PostCard({ post, posts, setPosts }: PostCardProps) {
             />
           </svg>
           <span>{post.comments.length}</span>
-        </div>
+        </button>
       </div>
 
-      {/* Mevcut Yorumlar */}
-      {post.comments.length > 0 && (
-        <div className="flex flex-col gap-3 pt-3">
-          {post.comments.map((comment, i) => (
-            <div
-              key={i}
-              className="bg-zinc-950/60 border border-violet-500/10 rounded-2xl px-6 py-4 text-lg text-zinc-300 flex items-center justify-between gap-4 backdrop-blur-md shadow-md min-w-0"
+      {/* SÜZÜLEREK AÇILAN YORUM PANELİ */}
+      <div 
+        className={`grid transition-all duration-300 ease-in-out ${
+          isCommentsOpen 
+            ? "grid-rows-[1fr] opacity-100 pt-4 border-t border-violet-500/20" 
+            : "grid-rows-[0fr] opacity-0 pt-0 border-t border-transparent"
+        }`}
+      >
+        <div className="overflow-hidden flex flex-col gap-4">
+          
+          {/* Yorum Ekleme Girişi (İçine Gömülü Gönder Butonu ile) */}
+          <div className="relative flex items-center w-full min-w-0">
+            <input
+              type="text"
+              placeholder="Yorum yaz..."
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddComment();
+                }
+              }}
+              className="w-full rounded-2xl border border-violet-500/30 bg-zinc-950/70 pl-5 pr-28 py-3.5 text-lg text-white placeholder-zinc-500 outline-none focus:border-violet-500 transition-all shadow-inner"
+            />
+            {/* İNPUT'UN İÇİNE GÖMÜLÜ GÖNDER BUTONU */}
+            <button
+              onClick={handleAddComment}
+              disabled={!commentText.trim()}
+              className="absolute right-2 px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:bg-violet-950/50 disabled:text-zinc-600 disabled:cursor-not-allowed text-white text-sm font-bold shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:scale-105 active:scale-95 transition-all cursor-pointer flex-shrink-0"
             >
-              {editingCommentIndex === i ? (
-                <div className="flex-1 flex gap-3 min-w-0">
-                  <input
-                    type="text"
-                    value={editCommentText}
-                    onChange={(e) => setEditCommentText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSaveEdit(i);
-                    }}
-                    className="flex-1 min-w-0 rounded-xl border border-violet-500/40 bg-zinc-900 px-4 py-2 text-white outline-none focus:border-violet-400 transition-all"
-                  />
-                  <button
-                    onClick={() => handleSaveEdit(i)}
-                    className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl text-sm shadow-[0_0_15px_rgba(139,92,246,0.4)] transition-all flex-shrink-0"
-                  >
-                    Kaydet
-                  </button>
-                  <button
-                    onClick={() => setEditingCommentIndex(null)}
-                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-xl text-sm transition-all flex-shrink-0"
-                  >
-                    Vazgeç
-                  </button>
+              Gönder
+            </button>
+          </div>
+
+          {/* Mevcut Yorumlar Listesi */}
+          {post.comments.length > 0 && (
+            <div className="flex flex-col gap-3 pt-2">
+              {post.comments.map((comment, i) => (
+                <div
+                  key={i}
+                  className="bg-zinc-950/60 border border-violet-500/10 rounded-2xl px-6 py-4 text-lg text-zinc-300 flex items-center justify-between gap-4 backdrop-blur-md shadow-md min-w-0"
+                >
+                  {editingCommentIndex === i ? (
+                    <div className="flex-1 flex gap-3 min-w-0">
+                      <input
+                        type="text"
+                        value={editCommentText}
+                        onChange={(e) => setEditCommentText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveEdit(i);
+                        }}
+                        className="flex-1 min-w-0 rounded-xl border border-violet-500/40 bg-zinc-900 px-4 py-2 text-white outline-none focus:border-violet-400 transition-all"
+                      />
+                      <button
+                        onClick={() => handleSaveEdit(i)}
+                        className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl text-sm shadow-[0_0_15px_rgba(139,92,246,0.4)] transition-all flex-shrink-0 cursor-pointer"
+                      >
+                        Kaydet
+                      </button>
+                      <button
+                        onClick={() => setEditingCommentIndex(null)}
+                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-xl text-sm transition-all flex-shrink-0 cursor-pointer"
+                      >
+                        Vazgeç
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="flex-1 break-words min-w-0">{comment}</span>
+                      
+                      {/* PÜRÜZLÜ ÜST/ALT KENARLI ALEV BUTONLARI */}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        {/* DÜZENLE BUTONU */}
+                        <button
+                          onClick={() => handleStartEdit(i, comment)}
+                          title="Düzenle"
+                          style={{ clipPath: "url(#flame-pill-clip)" }}
+                          className="px-6 py-2.5 bg-gradient-to-r from-purple-600 via-violet-500 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-base tracking-wider transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(147,51,234,0.6)] flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <span>Düzenle</span>
+                        </button>
+
+                        {/* SİL BUTONU */}
+                        <button
+                          onClick={() => handleDeleteComment(i)}
+                          title="Sil"
+                          style={{ clipPath: "url(#flame-pill-clip)" }}
+                          className="px-6 py-2.5 bg-gradient-to-r from-red-600 via-rose-500 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-extrabold text-base tracking-wider transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.6)] flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <span>Sil</span>
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
-              ) : (
-                <>
-                  <span className="flex-1 break-words min-w-0">{comment}</span>
-                  
-                  {/* PÜRÜZLÜ ÜST/ALT KENARLI ALEV BUTONLARI */}
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    
-                    {/* DÜZENLE BUTONU */}
-                    <button
-                      onClick={() => handleStartEdit(i, comment)}
-                      title="Düzenle"
-                      style={{ clipPath: "url(#flame-pill-clip)" }}
-                      className="px-6 py-2.5 bg-gradient-to-r from-purple-600 via-violet-500 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-base tracking-wider transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(147,51,234,0.6)] flex items-center justify-center gap-2"
-                    >
-                      <span>Düzenle</span>
-                    </button>
-
-                    {/* SİL BUTONU */}
-                    <button
-                      onClick={() => handleDeleteComment(i)}
-                      title="Sil"
-                      style={{ clipPath: "url(#flame-pill-clip)" }}
-                      className="px-6 py-2.5 bg-gradient-to-r from-red-600 via-rose-500 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-extrabold text-base tracking-wider transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.6)] flex items-center justify-center gap-2"
-                    >
-                      <span>Sil</span>
-                    </button>
-
-                  </div>
-                </>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* Yorum Ekleme Girişi */}
-      <div className="flex gap-4 pt-2 min-w-0">
-        <input
-          type="text"
-          placeholder="Yorum yaz..."
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleAddComment();
-            }
-          }}
-          className="flex-1 min-w-0 rounded-xl border border-violet-500/20 bg-zinc-950/70 px-5 py-3.5 text-lg text-white placeholder-zinc-500 outline-none focus:border-violet-500 transition-all"
-        />
-        <button
-          onClick={handleAddComment}
-          className="px-8 py-3.5 rounded-xl btn-primary text-lg font-bold shadow-[0_0_15px_rgba(139,92,246,0.4)] hover:scale-105 active:scale-95 transition-all flex-shrink-0"
-        >
-          Gönder
-        </button>
+        </div>
       </div>
     </div>
   );

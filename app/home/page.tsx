@@ -1,4 +1,6 @@
+import { supabase } from "@/lib/supabase";
 "use client";
+
 
 import { useState, useEffect } from "react";
 import Header from "../../components/Header";
