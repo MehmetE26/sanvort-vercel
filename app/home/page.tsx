@@ -25,8 +25,9 @@ export default function HomePage() {
       if (error) {
         console.error("Postlar çekilemedi:", error.message);
       } else if (data) {
+        console.log("Supabase'den çekilen ham postlar:", data);
         const formattedPosts: Post[] = data.map((item: any) => ({
-          id: item.id,
+          id: Number(item.id),
           author: "Mehmet",
           text: item.content,
           media_url: item.media_url,
@@ -44,6 +45,11 @@ export default function HomePage() {
 
   // Post paylaşma fonksiyonu (Supabase Kayıt)
   const handleShare = async (mediaUrl?: string, mediaType?: "image" | "video" | null) => {
+    console.log("--- PAYLAŞIM TESTİ ---");
+    console.log("Gelen Medya URL:", mediaUrl);
+    console.log("Gelen Medya Tipi:", mediaType);
+    console.log("Yazılan Metin:", postText);
+
     if (!postText.trim() && !mediaUrl) return;
 
     const { data, error } = await supabase
@@ -64,7 +70,7 @@ export default function HomePage() {
 
     if (data && data.length > 0) {
       const newPost: Post = {
-        id: data[0].id,
+        id: Number(data[0].id),
         author: "Mehmet",
         text: data[0].content,
         media_url: data[0].media_url,
